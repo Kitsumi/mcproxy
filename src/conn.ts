@@ -27,6 +27,15 @@ export interface Packet {
   state?: string;
 }
 
+export interface Chunk {
+  x: number;
+  z: number;
+  groundUp: boolean;
+  bitMap: number;
+  chunkData: Buffer;
+  blockEntities: any[];
+}
+
 export class Conn {
   bot: mineflayer.Bot;
   pclient?: mc.Client;
@@ -36,13 +45,17 @@ export class Conn {
   write = (name: string, data: any): void => {};
   writeRaw = (buffer: any): void => {};
   writeChannel = (channel: any, params: any): void => {};
-  constructor(botOptions: mineflayer.BotOptions, relayExcludedPacketNames?: string[]) {
+  private chunks: {[key: string]: Chunk;};
+  chunkRadius: number;
+  constructor(botOptions: mineflayer.BotOptions, relayExcludedPacketNames?: string[], chunkRadius?: number) {
     this.bot = mineflayer.createBot(botOptions);
     this.write = this.bot._client.write.bind(this.bot._client);
     this.writeRaw = this.bot._client.writeRaw.bind(this.bot._client);
     this.writeChannel = this.bot._client.writeChannel.bind(this.bot._client);
     this.metadata = [];
+    this.chunks = {};
     this.excludedPacketNames = relayExcludedPacketNames || ['keep_alive'];
+    this.chunkRadius = 5;
     this.bot._client.on('packet', (data, packetMeta) => {
       if (this.pclient) {
         try {
@@ -50,6 +63,21 @@ export class Conn {
         } catch (error) {
           console.log('pclient disconnected');
         }
+      }
+    });
+    this.bot._client.on('packet', (data, packetMeta) => {
+      if (packetMeta.name == "map_chunk") {
+        let tempChunks: {[key: string]: Chunk;} = {};
+        for (var x = -Math.floor(this.chunkRadius / 2); x < Math.ceil(this.chunkRadius / 2); x++) {
+          for (var z = -Math.floor(this.chunkRadius / 2); z < Math.ceil(this.chunkRadius / 2); z++) {
+            if (this.chunks[x+","+z]) {
+              tempChunks[x+","+z] = this.chunks[x+","+z];
+            }
+          }
+        }
+
+        this.chunks = tempChunks;
+        this.chunks[data.x+","+data.z] = (data as Chunk);
       }
     });
     this.events = [
@@ -256,7 +284,7 @@ export class Conn {
       return blockEntities;
     }
 
-    //* map_chunk (s)
+    /* map_chunk (s)
     let columnArray = (this.bot as any).world.getColumns();
     for (const index in columnArray) {
       if (Object.prototype.hasOwnProperty.call(columnArray, index)) {
@@ -271,6 +299,19 @@ export class Conn {
             groundUp: true,
             blockEntities: getBlockEntities(this.bot, chunkX, chunkZ),
           },
+        });
+      }
+    }
+    */
+
+    // Slightly lazier way to manage chunks.
+    for (const key in this.chunks) {
+      if (Object.prototype.hasOwnProperty.call(this.chunks, key)) {
+        const chunk = this.chunks[key];
+
+        packets.push({
+          name: 'map_chunk',
+          data: chunk
         });
       }
     }
@@ -449,7 +490,7 @@ export class Conn {
     }
   }
   disconnect() {
-    this.bot._client.end('fuckyouigo');
+    this.bot._client.end('goodbye');
     this.unlink();
   }
 }
