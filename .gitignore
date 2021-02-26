@@ -4,3 +4,4 @@ server/
 versions/
 launcher_profiles.json
 dist/
+.vscode/
