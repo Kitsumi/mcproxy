@@ -42,6 +42,7 @@ export class Conn {
   private events: { event: string; listener: (...arg0: any) => void }[];
   private metadata: { [entityId: number]: { key: number; type: number; value: any } };
   excludedPacketNames: string[];
+  downstreamExcludedPackets: string[];
   write = (name: string, data: any): void => {};
   writeRaw = (buffer: any): void => {};
   writeChannel = (channel: any, params: any): void => {};
