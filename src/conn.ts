@@ -56,7 +56,7 @@ export class Conn {
     this.chunks = {};
     this.excludedPacketNames = relayExcludedPacketNames || ['keep_alive'];
     this.downstreamExcludedPackets = downstreamExcludedPackets || [];
-    this.chunkRadius = 5;
+    this.chunkRadius = chunkRadius;
     this.bot._client.on('packet', (data, packetMeta) => {
       if (this.pclient && !this.downstreamExcludedPackets.includes(packetMeta.name)) {
         try {
