@@ -47,7 +47,7 @@ export class Conn {
   writeChannel = (channel: any, params: any): void => {};
   private chunks: {[key: string]: Chunk;};
   chunkRadius: number;
-  constructor(botOptions: mineflayer.BotOptions, relayExcludedPacketNames?: string[], chunkRadius?: number) {
+  constructor(botOptions: mineflayer.BotOptions, relayExcludedPacketNames?: string[], downstreamExcludedPackets?: string[], chunkRadius?: number) {
     this.bot = mineflayer.createBot(botOptions);
     this.write = this.bot._client.write.bind(this.bot._client);
     this.writeRaw = this.bot._client.writeRaw.bind(this.bot._client);
@@ -55,9 +55,10 @@ export class Conn {
     this.metadata = [];
     this.chunks = {};
     this.excludedPacketNames = relayExcludedPacketNames || ['keep_alive'];
+    this.downstreamExcludedPackets = downstreamExcludedPackets || [];
     this.chunkRadius = 5;
     this.bot._client.on('packet', (data, packetMeta) => {
-      if (this.pclient) {
+      if (this.pclient && !this.downstreamExcludedPackets.includes(packetMeta.name)) {
         try {
           this.pclient.write(packetMeta.name, data);
         } catch (error) {
