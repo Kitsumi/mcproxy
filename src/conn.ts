@@ -70,10 +70,11 @@ export class Conn {
     this.bot._client.on('packet', (data, packetMeta) => {
       if (packetMeta.name == "map_chunk") {
         let tempChunks: {[key: string]: Chunk;} = {};
+        let position = bot.entity.position;
         for (var x = -Math.floor(this.chunkRadius / 2); x < Math.ceil(this.chunkRadius / 2); x++) {
           for (var z = -Math.floor(this.chunkRadius / 2); z < Math.ceil(this.chunkRadius / 2); z++) {
-            if (this.chunks[x+","+z]) {
-              tempChunks[x+","+z] = this.chunks[x+","+z];
+            if (this.chunks[(x + Math.floor(position.x / 16))+","+(z + Math.floor(position.z / 16))]) {
+              tempChunks[(x + Math.floor(position.x / 16))+","+(z + Math.floor(position.z / 16))] = this.chunks[(x + Math.floor(position.x / 16))+","+(z + Math.floor(position.z / 16))];
             }
           }
         }
